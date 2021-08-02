@@ -1,9 +1,8 @@
-module flopenr #(parameter WIDTH=32)
+module flopr #(parameter WIDTH=32)
 (
     input logic clk,
     input logic reset_n,
     input logic [WIDTH-1:0] init,
-    input logic wr_en,
     input logic [WIDTH-1:0] in,
     output logic [WIDTH-1:0] out
 );
@@ -11,7 +10,7 @@ module flopenr #(parameter WIDTH=32)
 always_ff @(posedge clk)
     if(!reset_n)
         out <= init;
-    else if(wr_en)
+    else 
         out <= in;
 
 endmodule

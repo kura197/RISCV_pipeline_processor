@@ -19,12 +19,13 @@ VFLAGS := --trace --trace-params --trace-structs --trace-underscore
 # need to set TEST_BIN for simulation
 .PHONY:test
 test: $(OBJ_DIR)/$(OBJ)
-	./$(OBJ_DIR)/$(OBJ) $(TEST_BIN)
+	#./$(OBJ_DIR)/$(OBJ) $(TEST_BIN)
+	TEST_DIR=$(TEST_DIR) ./test.sh
 
 $(OBJ_DIR)/$(OBJ): $(OBJ_DIR)
 	make -C $(OBJ_DIR) -f $(MKFILE)
 
-$(OBJ_DIR): $(SRC) $(TB_SRC)
+$(OBJ_DIR): src/* testbench/*
 	if [ -d "$(OBJ_DIR)" ]; then rm -r $(OBJ_DIR); fi
 	verilator -cc $(SRC) $(VFLAGS) -CFLAGS $(CFLAGS) -exe $(TB_SRC) -I$(INCLUDE) -o $(OBJ)
 
