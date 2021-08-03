@@ -4,7 +4,7 @@
 
 package lib_pkg;
 
-    typedef enum logic [3:0] {LUI, AUIPC, JAL, JALR, BRANCH, LOAD, STORE, OPIMM, OP, MISCMEM, SYSTEM} op_type_t;
+    typedef enum logic [3:0] {NOP, LUI, AUIPC, JAL, JALR, BRANCH, LOAD, STORE, OPIMM, OP, MISCMEM, SYSTEM} op_type_t;
     typedef enum logic [3:0] {ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND} alu_type_t;
     typedef enum logic [3:0] {BEQ, BNE, BLT, BGE, BLTU, BGEU} cmp_type_t;
 
@@ -32,6 +32,7 @@ package lib_pkg;
         logic [0:0] sel_pc;
         logic [31:0] pc;
         logic [31:0] inc_pc;
+        logic [3:0] dmem_wr_en;
         logic [0:0] ecall;
     } bus_stage1;
 
@@ -45,6 +46,7 @@ package lib_pkg;
         logic [31:0] ex_out;
         logic [0:0] cmp_out;
         logic [31:0] inc_pc;
+        logic [3:0] dmem_wr_en;
         logic [0:0] ecall;
     } bus_stage2;
 

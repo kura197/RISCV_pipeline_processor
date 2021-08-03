@@ -27,10 +27,19 @@ import lib_pkg::*;
     output logic cmp_out,
     input logic [1:0] sel_rdata1_f,
     input logic [1:0] sel_rdata2_f,
+    output logic [4:0] rd_ex, 
     output logic [4:0] rd_mem, 
     output logic [4:0] rd_wb, 
+    output logic [4:0] rs1_dec, 
+    output logic [4:0] rs2_dec, 
     output logic [4:0] rs1_ex, 
     output logic [4:0] rs2_ex, 
+    output logic mem_to_reg,
+    input logic stall_f,
+    input logic stall_d,
+    input logic flush_e,
+    input logic [3:0] dmem_wr_en_dec,
+    output logic [3:0] dmem_wr_en,
     input logic ecall,
     output logic fin
 );
@@ -76,19 +85,22 @@ assign stage1 = '{
                 sel_pc: sel_pc,
                 pc: reg_stage0.pc,
                 inc_pc: inc_pc,
+                dmem_wr_en: dmem_wr_en_dec,
                 ecall: ecall
                 };
 
 assign stage2 = '{
                 rf_wr_en: reg_stage1.rf_wr_en,
                 rd: reg_stage1.rd,
-                rf_rdata2: reg_stage1.rf_rdata2,
+                //rf_rdata2: reg_stage1.rf_rdata2,
+                rf_rdata2: rf_rdata2_f,
                 sel_res: reg_stage1.sel_res,
                 sel_rf_wr: reg_stage1.sel_rf_wr,
                 sel_pc: reg_stage1.sel_pc,
                 ex_out: ex_out,
                 cmp_out: cmp_out,
                 inc_pc: reg_stage1.inc_pc,
+                dmem_wr_en: reg_stage1.dmem_wr_en,
                 ecall: reg_stage1.ecall
                 };
 
@@ -109,23 +121,26 @@ assign instr = imem_rdata;
 assign dmem_addr = reg_stage2.ex_out[DADDR-1:0];
 assign dmem_wdata = reg_stage2.rf_rdata2;
 assign fin = reg_stage3.ecall;
-    //input logic [4:0] rd_mem, 
-    //input logic [4:0] rd_wb, 
-    //input logic [4:0] rs1_ex, 
-    //input logic [4:0] rs2_ex, 
+
+assign rd_ex = reg_stage1.rd;
 assign rd_mem = reg_stage2.rd;
 assign rd_wb = reg_stage3.rd;
+assign rs1_dec = rs1;
+assign rs2_dec = rs2;
 assign rs1_ex = reg_stage1.rs1;
 assign rs2_ex = reg_stage1.rs2;
+assign mem_to_reg = reg_stage1.sel_res;
+assign dmem_wr_en = reg_stage2.dmem_wr_en;
 
 ////////// Fetch //////////
 
-flopr #(
+flopenr #(
     .WIDTH(WIDTH)
 ) reg_pc (
     .clk(clk),
     .reset_n(reset_n),
     .init(init_pc),
+    .wr_en(!stall_f),
     .in(next_pc),
     .out(pc)
 );
@@ -133,12 +148,13 @@ flopr #(
 
 ////////// Decode //////////
 
-flopr #(
+flopenr #(
     .WIDTH($bits(stage0))
 ) reg_decode (
     .clk(clk),
     .reset_n(reset_n),
     .init('d0),
+    .wr_en(!stall_d),
     .in(stage0),
     .out(reg_stage0)
 );
@@ -156,7 +172,6 @@ decoder #(
     .imm(imm)
 );
 
-/// TODO: support pipeline write-back
 regfile #(
     .WIDTH(WIDTH),
     .ADDR(RFADDR)
@@ -174,12 +189,14 @@ regfile #(
 
 ////////// Execute //////////
 
-flopr #(
+flopenr #(
     .WIDTH($bits(stage1))
 ) reg_execute (
     .clk(clk),
-    .reset_n(reset_n),
+    .reset_n(reset_n & ~flush_e),
+    //.reset_n(reset_n),
     .init('d0),
+    .wr_en(1'b1),
     .in(stage1),
     .out(reg_stage1)
 );
@@ -253,12 +270,13 @@ mux2 #(
 
 ////////// Memory //////////
 
-flopr #(
+flopenr #(
     .WIDTH($bits(stage2))
 ) reg_memory (
     .clk(clk),
     .reset_n(reset_n),
     .init('d0),
+    .wr_en(1'b1),
     .in(stage2),
     .out(reg_stage2)
 );
@@ -267,19 +285,20 @@ mux2 #(
     .WIDTH(WIDTH)
 ) mux2_res (
     .sel(reg_stage2.sel_res),
-    .in0(dmem_rdata),
-    .in1(reg_stage2.ex_out),
+    .in0(reg_stage2.ex_out),
+    .in1(dmem_rdata),
     .out(result)
 );
 
 ////////// Write Back //////////
 
-flopr #(
+flopenr #(
     .WIDTH($bits(stage3))
 ) reg_wback (
     .clk(clk),
     .reset_n(reset_n),
     .init('d0),
+    .wr_en(1'b1),
     .in(stage3),
     .out(reg_stage3)
 );

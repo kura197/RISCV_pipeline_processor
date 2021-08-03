@@ -33,7 +33,12 @@ logic cmp_res;
 logic ecall;
 logic [WIDTH-1:0] dmem_rdata_ex;
 logic [1:0] sel_rdata1_f, sel_rdata2_f;
-logic [4:0] rd_mem, rd_wb, rs1_ex, rs2_ex;
+logic [4:0] rd_ex, rd_mem, rd_wb, rs1_dec, rs2_dec, rs1_ex, rs2_ex;
+logic stall_f;
+logic stall_d;
+logic flush_e;
+logic mem_to_reg;
+logic [3:0] dmem_wr_en_dec;
 
 datapath #(
     .WIDTH(WIDTH),
@@ -63,10 +68,19 @@ datapath #(
     .cmp_out(cmp_res),
     .sel_rdata1_f(sel_rdata1_f),
     .sel_rdata2_f(sel_rdata2_f),
+    .rd_ex(rd_ex),
     .rd_mem(rd_mem),
     .rd_wb(rd_wb),
+    .rs1_dec(rs1_dec),
+    .rs2_dec(rs2_dec),
     .rs1_ex(rs1_ex),
     .rs2_ex(rs2_ex),
+    .stall_f(stall_f),
+    .stall_d(stall_d),
+    .flush_e(flush_e),
+    .mem_to_reg(mem_to_reg),
+    .dmem_wr_en_dec(dmem_wr_en_dec),
+    .dmem_wr_en(dmem_wr_en),
     .ecall(ecall),
     .fin(fin)
 );
@@ -81,7 +95,7 @@ controller #(
     .sel_alu1(sel_alu1),
     .alu_type(alu_type),
     .sel_ex(sel_ex),
-    .dmem_wr_en(dmem_wr_en),
+    .dmem_wr_en(dmem_wr_en_dec),
     .sel_res(sel_res),
     .sel_rf_wr(sel_rf_wr),
     .rf_wr_en(rf_wr_en),
@@ -101,12 +115,19 @@ mem_extent #(
 
 hazard_detector #(
 ) hazard_detector (
+    .rd_ex(rd_ex),
     .rd_mem(rd_mem),
     .rd_wb(rd_wb),
+    .rs1_dec(rs1_dec),
+    .rs2_dec(rs2_dec),
     .rs1_ex(rs1_ex),
     .rs2_ex(rs2_ex),
     .sel_rdata1_f(sel_rdata1_f),
-    .sel_rdata2_f(sel_rdata2_f)
+    .sel_rdata2_f(sel_rdata2_f),
+    .load(mem_to_reg),
+    .stall_f(stall_f), 
+    .stall_d(stall_d),
+    .flush_e(flush_e)
 );
 
 endmodule
