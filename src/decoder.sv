@@ -16,61 +16,116 @@ import lib_pkg::*;
 
 logic [6:0] opcode;
 assign opcode = instr[6:0];
-assign rd = instr[11:7];
-assign funct3 = instr[14:12];
-assign rs1 = instr[19:15];
-assign rs2 = instr[24:20];
-assign funct7 = instr[31:25];
 
 always_comb
     case(opcode)
         7'b0110111: begin
             op_type = LUI;
             imm = {instr[31:12], 12'b0};
+            rd = instr[11:7];
+            funct3 = 0;
+            rs1 = 0;
+            rs2 = 0;
+            funct7 = 0;
         end
         7'b0010111: begin
             op_type = AUIPC;
             imm = {instr[31:12], 12'b0};
+            rd = instr[11:7];
+            funct3 = 0;
+            rs1 = 0;
+            rs2 = 0;
+            funct7 = 0;
         end
         7'b1101111: begin
             op_type = JAL;
             imm = {{11{instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};
+            rd = instr[11:7];
+            funct3 = 0;
+            rs1 = 0;
+            rs2 = 0;
+            funct7 = 0;
         end
         7'b1100111: begin
             op_type = JALR;
             imm = {{20{instr[31]}}, instr[31:20]};
+            rd = instr[11:7];
+            funct3 = instr[14:12];
+            rs1 = instr[19:15];
+            rs2 = 0;
+            funct7 = 0;
         end
         7'b1100011: begin
             op_type = BRANCH;
             imm = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
+            rd = instr[11:7];
+            funct3 = instr[14:12];
+            rs1 = instr[19:15];
+            rs2 = instr[24:20];
+            funct7 = 0;
         end
         7'b0000011: begin
             op_type = LOAD;
             imm = {{20{instr[31]}}, instr[31:20]};
+            rd = instr[11:7];
+            funct3 = instr[14:12];
+            rs1 = instr[19:15];
+            rs2 = 0;
+            funct7 = 0;
         end
         7'b0100011: begin
             op_type = STORE;
             imm = {{20{instr[31]}}, instr[31:25], instr[11:7]};
+            rd = 0;
+            funct3 = instr[14:12];
+            rs1 = instr[19:15];
+            rs2 = instr[24:20];
+            funct7 = 0;
         end
         7'b0010011: begin
             op_type = OPIMM;
             imm = {{20{instr[31]}}, instr[31:20]};
+            rd = instr[11:7];
+            funct3 = instr[14:12];
+            rs1 = instr[19:15];
+            rs2 = 0;
+            funct7 = 0;
         end
         7'b0110011: begin
             op_type = OP;
             imm = 32'dx;
+            rd = instr[11:7];
+            funct3 = instr[14:12];
+            rs1 = instr[19:15];
+            rs2 = instr[24:20];
+            funct7 = instr[31:25];
         end
         7'b0001111: begin
             op_type = MISCMEM;
             imm = 32'dx;
+            rd = 0;
+            funct3 = 0;
+            rs1 = 0;
+            rs2 = 0;
+            funct7 = 0;
         end
         7'b1110011: begin
             op_type = SYSTEM;
             imm = 32'dx;
+            rd = 0;
+            funct3 = 0;
+            rs1 = 0;
+            rs2 = 0;
+            funct7 = 0;
         end
         default: begin
             op_type = 4'dx;
             imm = 32'dx;
+            rd = 'x;
+            funct3 = 'x;
+            rs1 = 'x;
+            rs2 = 'x;
+            funct7 = 'x;
         end
     endcase
 

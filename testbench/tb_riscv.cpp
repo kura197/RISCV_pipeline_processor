@@ -26,6 +26,12 @@ unsigned int read_mem(vector<unsigned char>& mem, int addr){
     for(int i = 0; i < 4; i++){
         ret |= static_cast<unsigned int>(mem[addr+i]) << (8*i);
     }
+
+    //static int last;
+    //if(addr > 0x100 && last != addr){
+    //    fprintf(stderr, "read. addr=%x, val=%x\n", addr, ret);
+    //    last = addr;
+    //}
     return ret;
 }
 
@@ -33,9 +39,10 @@ void write_mem(vector<unsigned char>& mem, int addr, unsigned int val, int wr_en
     for(int i = 0; i < 4; i++){
         if((wr_en >> i) & 1){
             mem[addr+i] = (val >> (8*i)) & 0xFF;
-            fprintf(stderr, "write. addr=%x, val=%x\n", addr+i, mem[addr+i]);
         }
     }
+    //if(wr_en)
+    //    fprintf(stderr, "write. addr=%x, val=%x\n", addr, val);
 }
 
 int main(int argc, char **argv) {
@@ -98,7 +105,7 @@ int main(int argc, char **argv) {
         dut->dmem_rdata = read_mem(mem, dut->dmem_addr);
         dut->imem_rdata = read_mem(mem, dut->imem_addr);
         if(time_counter % 5 == 0){
-            if(dut->clk == 0){
+            if(dut->clk == 1){
                 write_mem(mem, dut->dmem_addr, dut->dmem_wdata, dut->dmem_wr_en);
             }
         }

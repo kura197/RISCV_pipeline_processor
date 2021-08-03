@@ -44,6 +44,8 @@ import lib_pkg::*;
     output logic fin
 );
 
+///TODO: branch hazard
+
 localparam RFADDR = 5;
 
 logic [WIDTH-1:0] pc, next_pc, inc_pc;

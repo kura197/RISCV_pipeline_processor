@@ -26,10 +26,10 @@ assign stall_f = stall_load;
 assign stall_d = stall_load;
 assign flush_e = stall_load;
 
-assign sel_rdata1_f = (rd_mem == rs1_ex) ? 2'b01 :
-                      (rd_wb == rs1_ex)  ? 2'b10 : 2'b00;
+assign sel_rdata1_f = (rs1_ex != 0 && rd_mem == rs1_ex) ? 2'b01 :
+                      (rs1_ex != 0 && rd_wb == rs1_ex)  ? 2'b10 : 2'b00;
 
-assign sel_rdata2_f = (rd_mem == rs2_ex) ? 2'b01 :
-                      (rd_wb == rs2_ex)  ? 2'b10 : 2'b00;
+assign sel_rdata2_f = (rs2_ex != 0 && rd_mem == rs2_ex) ? 2'b01 :
+                      (rs2_ex != 0 && rd_wb == rs2_ex)  ? 2'b10 : 2'b00;
     
 endmodule
