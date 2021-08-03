@@ -25,6 +25,12 @@ import lib_pkg::*;
     input logic sel_pc,
     input cmp_type_t cmp_type,
     output logic cmp_out,
+    input logic [1:0] sel_rdata1_f,
+    input logic [1:0] sel_rdata2_f,
+    output logic [4:0] rd_mem, 
+    output logic [4:0] rd_wb, 
+    output logic [4:0] rs1_ex, 
+    output logic [4:0] rs2_ex, 
     input logic ecall,
     output logic fin
 );
@@ -36,6 +42,7 @@ logic [WIDTH-1:0] instr;
 logic [WIDTH-1:0] imm;
 logic [RFADDR-1:0] rs1, rs2, rd;
 logic [WIDTH-1:0] rf_rdata1, rf_rdata2, rf_wdata;
+logic [WIDTH-1:0] rf_rdata1_f, rf_rdata2_f;
 logic [WIDTH-1:0] alu_in0, alu_in1, alu_out;
 logic [WIDTH-1:0] ex_out;
 logic [WIDTH-1:0] result;
@@ -53,6 +60,8 @@ assign stage0 = '{
 
 assign stage1 = '{
                 rf_wr_en: rf_wr_en,
+                rs1: rs1,
+                rs2: rs2,
                 rd: rd,
                 rf_rdata1: rf_rdata1,
                 rf_rdata2: rf_rdata2,
@@ -100,6 +109,14 @@ assign instr = imem_rdata;
 assign dmem_addr = reg_stage2.ex_out[DADDR-1:0];
 assign dmem_wdata = reg_stage2.rf_rdata2;
 assign fin = reg_stage3.ecall;
+    //input logic [4:0] rd_mem, 
+    //input logic [4:0] rd_wb, 
+    //input logic [4:0] rs1_ex, 
+    //input logic [4:0] rs2_ex, 
+assign rd_mem = reg_stage2.rd;
+assign rd_wb = reg_stage3.rd;
+assign rs1_ex = reg_stage1.rs1;
+assign rs2_ex = reg_stage1.rs2;
 
 ////////// Fetch //////////
 
@@ -167,11 +184,33 @@ flopr #(
     .out(reg_stage1)
 );
 
+mux4 #(
+    .WIDTH(WIDTH)
+) mux4_rf_rdata1_forwarding (
+    .sel(sel_rdata1_f),
+    .in0(reg_stage1.rf_rdata1),
+    .in1(reg_stage2.ex_out),
+    .in2(reg_stage3.result),
+    .in3(),
+    .out(rf_rdata1_f)
+);
+
+mux4 #(
+    .WIDTH(WIDTH)
+) mux4_rf_rdata2_forwarding (
+    .sel(sel_rdata2_f),
+    .in0(reg_stage1.rf_rdata2),
+    .in1(reg_stage2.ex_out),
+    .in2(reg_stage3.result),
+    .in3(),
+    .out(rf_rdata2_f)
+);
+
 mux2 #(
     .WIDTH(WIDTH)
 ) mux2_alu0 (
     .sel(reg_stage1.sel_alu0),
-    .in0(reg_stage1.rf_rdata1),
+    .in0(rf_rdata1_f),
     .in1(reg_stage1.pc),
     .out(alu_in0)
 );
@@ -180,7 +219,7 @@ mux2 #(
     .WIDTH(WIDTH)
 ) mux2_alu1 (
     .sel(reg_stage1.sel_alu1),
-    .in0(reg_stage1.rf_rdata2),
+    .in0(rf_rdata2_f),
     .in1(reg_stage1.imm),
     .out(alu_in1)
 );

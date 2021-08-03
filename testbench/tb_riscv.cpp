@@ -31,8 +31,10 @@ unsigned int read_mem(vector<unsigned char>& mem, int addr){
 
 void write_mem(vector<unsigned char>& mem, int addr, unsigned int val, int wr_en){
     for(int i = 0; i < 4; i++){
-        if((wr_en >> i) & 1)
+        if((wr_en >> i) & 1){
             mem[addr+i] = (val >> (8*i)) & 0xFF;
+            fprintf(stderr, "write. addr=%x, val=%x\n", addr+i, mem[addr+i]);
+        }
     }
 }
 

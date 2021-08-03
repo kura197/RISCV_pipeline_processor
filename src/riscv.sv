@@ -32,6 +32,8 @@ cmp_type_t cmp_type;
 logic cmp_res;
 logic ecall;
 logic [WIDTH-1:0] dmem_rdata_ex;
+logic [1:0] sel_rdata1_f, sel_rdata2_f;
+logic [4:0] rd_mem, rd_wb, rs1_ex, rs2_ex;
 
 datapath #(
     .WIDTH(WIDTH),
@@ -59,6 +61,12 @@ datapath #(
     .sel_pc(sel_pc),
     .cmp_type(cmp_type),
     .cmp_out(cmp_res),
+    .sel_rdata1_f(sel_rdata1_f),
+    .sel_rdata2_f(sel_rdata2_f),
+    .rd_mem(rd_mem),
+    .rd_wb(rd_wb),
+    .rs1_ex(rs1_ex),
+    .rs2_ex(rs2_ex),
     .ecall(ecall),
     .fin(fin)
 );
@@ -91,6 +99,14 @@ mem_extent #(
     .out(dmem_rdata_ex)
 );
 
-// add controller
+hazard_detector #(
+) hazard_detector (
+    .rd_mem(rd_mem),
+    .rd_wb(rd_wb),
+    .rs1_ex(rs1_ex),
+    .rs2_ex(rs2_ex),
+    .sel_rdata1_f(sel_rdata1_f),
+    .sel_rdata2_f(sel_rdata2_f)
+);
 
 endmodule

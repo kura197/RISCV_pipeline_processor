@@ -17,6 +17,8 @@ package lib_pkg;
     typedef struct packed {
         logic [0:0] rf_wr_en;
         logic [4:0] rd;
+        logic [4:0] rs1;
+        logic [4:0] rs2;
         logic [31:0] rf_rdata1;
         logic [31:0] rf_rdata2;
         logic [31:0] imm;
