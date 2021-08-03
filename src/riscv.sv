@@ -30,7 +30,7 @@ logic rf_wr_en;
 logic sel_pc;
 cmp_type_t cmp_type;
 logic cmp_res;
-
+logic ecall;
 logic [WIDTH-1:0] dmem_rdata_ex;
 
 datapath #(
@@ -58,7 +58,9 @@ datapath #(
     .rf_wr_en(rf_wr_en),
     .sel_pc(sel_pc),
     .cmp_type(cmp_type),
-    .cmp_out(cmp_res)
+    .cmp_out(cmp_res),
+    .ecall(ecall),
+    .fin(fin)
 );
 
 controller #(
@@ -77,7 +79,7 @@ controller #(
     .rf_wr_en(rf_wr_en),
     .sel_pc(sel_pc),
     .cmp_type(cmp_type),
-    .fin(fin)
+    .fin(ecall)
 );
 
 mem_extent #(

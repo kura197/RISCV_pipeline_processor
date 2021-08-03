@@ -24,7 +24,9 @@ import lib_pkg::*;
     input logic rf_wr_en,
     input logic sel_pc,
     input cmp_type_t cmp_type,
-    output logic cmp_out
+    output logic cmp_out,
+    input logic ecall,
+    output logic fin
 );
 
 localparam RFADDR = 5;
@@ -54,7 +56,6 @@ assign stage1 = '{
                 rd: rd,
                 rf_rdata1: rf_rdata1,
                 rf_rdata2: rf_rdata2,
-                rf_wdata: rf_wdata,
                 imm: imm,
                 sel_alu0: sel_alu0,
                 sel_alu1: sel_alu1,
@@ -65,31 +66,32 @@ assign stage1 = '{
                 sel_rf_wr: sel_rf_wr,
                 sel_pc: sel_pc,
                 pc: reg_stage0.pc,
-                inc_pc: inc_pc
+                inc_pc: inc_pc,
+                ecall: ecall
                 };
 
 assign stage2 = '{
-                rf_wr_en: rf_wr_en,
-                rd: rd,
-                rf_rdata2: rf_rdata2,
-                rf_wdata: rf_wdata,
-                sel_res: sel_res,
-                sel_rf_wr: sel_rf_wr,
-                sel_pc: sel_pc,
+                rf_wr_en: reg_stage1.rf_wr_en,
+                rd: reg_stage1.rd,
+                rf_rdata2: reg_stage1.rf_rdata2,
+                sel_res: reg_stage1.sel_res,
+                sel_rf_wr: reg_stage1.sel_rf_wr,
+                sel_pc: reg_stage1.sel_pc,
                 ex_out: ex_out,
                 cmp_out: cmp_out,
-                inc_pc: inc_pc
+                inc_pc: reg_stage1.inc_pc,
+                ecall: reg_stage1.ecall
                 };
 
 assign stage3 = '{
-                rf_wr_en: rf_wr_en,
-                rd: rd,
-                rf_wdata: rf_wdata,
-                sel_rf_wr: sel_rf_wr,
-                sel_pc: sel_pc,
-                cmp_out: cmp_out,
+                rf_wr_en: reg_stage2.rf_wr_en,
+                rd: reg_stage2.rd,
+                sel_rf_wr: reg_stage2.sel_rf_wr,
+                sel_pc: reg_stage2.sel_pc,
+                cmp_out: reg_stage2.cmp_out,
                 result: result,
-                inc_pc: inc_pc
+                inc_pc: reg_stage2.inc_pc,
+                ecall: reg_stage2.ecall
                 };
 
 assign inc_pc = pc + 4;
@@ -97,6 +99,7 @@ assign imem_addr = pc[IADDR-1:0];
 assign instr = imem_rdata;
 assign dmem_addr = reg_stage2.ex_out[DADDR-1:0];
 assign dmem_wdata = reg_stage2.rf_rdata2;
+assign fin = reg_stage3.ecall;
 
 ////////// Fetch //////////
 
@@ -149,7 +152,7 @@ regfile #(
     .rd(reg_stage3.rd),
     .rdata1(rf_rdata1),
     .rdata2(rf_rdata2),
-    .wdata(reg_stage3.rf_wdata)
+    .wdata(rf_wdata)
 );
 
 ////////// Execute //////////

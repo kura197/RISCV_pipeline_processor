@@ -19,7 +19,6 @@ package lib_pkg;
         logic [4:0] rd;
         logic [31:0] rf_rdata1;
         logic [31:0] rf_rdata2;
-        logic [31:0] rf_wdata;
         logic [31:0] imm;
         logic [0:0] sel_alu0;
         logic [0:0] sel_alu1;
@@ -31,30 +30,31 @@ package lib_pkg;
         logic [0:0] sel_pc;
         logic [31:0] pc;
         logic [31:0] inc_pc;
+        logic [0:0] ecall;
     } bus_stage1;
 
     typedef struct packed {
         logic [0:0] rf_wr_en;
         logic [4:0] rd;
         logic [31:0] rf_rdata2;
-        logic [31:0] rf_wdata;
         logic [0:0] sel_res;
         logic [0:0] sel_rf_wr;
         logic [0:0] sel_pc;
         logic [31:0] ex_out;
         logic [0:0] cmp_out;
         logic [31:0] inc_pc;
+        logic [0:0] ecall;
     } bus_stage2;
 
     typedef struct packed {
         logic [0:0] rf_wr_en;
         logic [4:0] rd;
-        logic [31:0] rf_wdata;
         logic [0:0] sel_rf_wr;
         logic [0:0] sel_pc;
         logic [0:0] cmp_out;
         logic [31:0] result;
         logic [31:0] inc_pc;
+        logic [0:0] ecall;
     } bus_stage3;
 
 endpackage
