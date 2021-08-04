@@ -1,4 +1,4 @@
-module regfile #(parameter WIDTH=32, ADDR=5)
+module regfile #(parameter WIDTH=32, ADDR=5, SP_INIT='h8000)
 (
     input logic clk,
     input logic reset_n,
@@ -22,7 +22,7 @@ always_ff @(negedge clk)
     if(!reset_n) begin
         for(int i = 0; i < nENTRY; i++)
             data[i] <= 0;
-        data[2] <= 32'h1000;
+        data[2] <= SP_INIT;
     end
     else if(wr_en)
         data[rd] <= wdata;
