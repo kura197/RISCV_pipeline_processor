@@ -5,6 +5,7 @@ import lib_pkg::*;
 #()
 (
     input op_type_t op_type,
+    input op_type_t reg_op_type,
     input logic [2:0] funct3,
     input logic [6:0] funct7,
     input logic cmp_res,
@@ -27,7 +28,10 @@ assign fin = (op_type == SYSTEM) && ({funct7, funct3} == 10'd0);
 /// typedef enum [`INSTR_BIT-1:0] {NOP, LUI, AUIPC, JAL, JALR, BRANCH, LOAD, STORE, OPIMM, OP, MISCMEM, SYSTEM} instr_kind;
 /// typedef enum logic [3:0] {ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND} alu_type_t;
 /// typedef enum logic [3:0] {BEQ, BNE, BLT, BGE, BLTU, BGEU} cmp_type_t;
-assign sel_pc = (op_type == BRANCH) && cmp_res || op_type == JAL || op_type == JALR;
+
+//assign sel_pc = (op_type == BRANCH) && cmp_res || op_type == JAL || op_type == JALR;
+assign sel_pc = (reg_op_type == BRANCH) && cmp_res || reg_op_type == JAL || reg_op_type == JALR;
+
 ///TODO: support don't care signal
 always_comb
     case(op_type)

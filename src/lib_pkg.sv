@@ -15,6 +15,7 @@ package lib_pkg;
     } bus_stage0;
 
     typedef struct packed {
+        op_type_t op_type;
         logic [0:0] rf_wr_en;
         logic [4:0] rd;
         logic [4:0] rs1;
@@ -29,7 +30,6 @@ package lib_pkg;
         logic [0:0] sel_ex;
         logic [0:0] sel_res;
         logic [0:0] sel_rf_wr;
-        logic [0:0] sel_pc;
         logic [31:0] pc;
         logic [31:0] inc_pc;
         logic [3:0] dmem_wr_en;

@@ -8,6 +8,7 @@ import lib_pkg::*;
     input logic reset_n,
     input logic [WIDTH-1:0] init_pc,
     output op_type_t op_type,
+    output op_type_t reg_op_type,
     output logic [2:0] funct3,
     output logic [6:0] funct7,
     output logic [IADDR-1:0] imem_addr,
@@ -70,6 +71,7 @@ assign stage0 = '{
                 };
 
 assign stage1 = '{
+                op_type: op_type,
                 rf_wr_en: rf_wr_en,
                 rs1: rs1,
                 rs2: rs2,
@@ -84,7 +86,6 @@ assign stage1 = '{
                 sel_ex: sel_ex,
                 sel_res: sel_res,
                 sel_rf_wr: sel_rf_wr,
-                sel_pc: sel_pc,
                 pc: reg_stage0.pc,
                 inc_pc: inc_pc,
                 dmem_wr_en: dmem_wr_en_dec,
@@ -98,7 +99,7 @@ assign stage2 = '{
                 rf_rdata2: rf_rdata2_f,
                 sel_res: reg_stage1.sel_res,
                 sel_rf_wr: reg_stage1.sel_rf_wr,
-                sel_pc: reg_stage1.sel_pc,
+                sel_pc: sel_pc,
                 ex_out: ex_out,
                 cmp_out: cmp_out,
                 inc_pc: reg_stage1.inc_pc,
@@ -133,6 +134,7 @@ assign rs1_ex = reg_stage1.rs1;
 assign rs2_ex = reg_stage1.rs2;
 assign mem_to_reg = reg_stage1.sel_res;
 assign dmem_wr_en = reg_stage2.dmem_wr_en;
+assign reg_op_type = reg_stage1.op_type;
 
 ////////// Fetch //////////
 
@@ -318,8 +320,10 @@ mux2 #(
 mux2 #(
     .WIDTH(WIDTH)
 ) mux2_pc (
+    //.sel(reg_stage3.sel_pc),
     .sel(reg_stage3.sel_pc),
     .in0(inc_pc),
+    //.in1(reg_stage3.result),
     .in1(reg_stage3.result),
     .out(next_pc)
 );

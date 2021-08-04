@@ -16,7 +16,7 @@ module riscv #(parameter WIDTH=32, IADDR=16, DADDR=16)
 
 import lib_pkg::*;
 
-op_type_t op_type;
+op_type_t op_type, reg_op_type;
 logic [2:0] funct3;
 logic [6:0] funct7;
 
@@ -49,6 +49,7 @@ datapath #(
     .reset_n(reset_n),
     .init_pc(init_pc),
     .op_type(op_type),
+    .reg_op_type(reg_op_type),
     .funct3(funct3),
     .funct7(funct7),
     .imem_addr(imem_addr),
@@ -88,6 +89,7 @@ datapath #(
 controller #(
 ) controller (
     .op_type(op_type),
+    .reg_op_type(reg_op_type),
     .funct3(funct3),
     .funct7(funct7),
     .cmp_res(cmp_res),
