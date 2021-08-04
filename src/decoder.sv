@@ -89,7 +89,7 @@ always_comb
             funct3 = instr[14:12];
             rs1 = instr[19:15];
             rs2 = 0;
-            funct7 = 0;
+            funct7 = instr[31:25];
         end
         7'b0110011: begin
             op_type = OP;

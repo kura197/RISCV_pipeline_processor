@@ -61,18 +61,17 @@ logic [WIDTH-1:0] result;
 logic flush_f, flush_d, flush_e;
 logic stall_f, stall_d;
 
-bus_stage0 stage0, reg_stage0;
-bus_stage1 stage1, reg_stage1;
-bus_stage2 stage2, reg_stage2;
-bus_stage3 stage3, reg_stage3;
+bus_stage_f stage_f, reg_stage_f;
+bus_stage_d stage_d, reg_stage_d;
+bus_stage_e stage_e, reg_stage_e;
+bus_stage_m stage_m, reg_stage_m;
 
-assign stage0 = '{
+assign stage_f = '{
                 instr: instr,
-                pc: pc,
-                inc_pc: inc_pc
+                pc: pc
                 };
 
-assign stage1 = '{
+assign stage_d = '{
                 op_type: op_type,
                 rf_wr_en: rf_wr_en,
                 rs1: rs1,
@@ -89,54 +88,53 @@ assign stage1 = '{
                 sel_ex: sel_ex,
                 sel_res: sel_res,
                 sel_rf_wr: sel_rf_wr,
-                pc: reg_stage0.pc,
-                inc_pc: inc_pc,
+                pc: reg_stage_f.pc,
+                inc_pc: pc, /// reg_stage_f.pc + 4
                 dmem_wr_en: dmem_wr_en_dec,
                 ecall: ecall
                 };
 
-assign stage2 = '{
-                rf_wr_en: reg_stage1.rf_wr_en,
-                rd: reg_stage1.rd,
-                //rf_rdata2: reg_stage1.rf_rdata2,
+assign stage_e = '{
+                rf_wr_en: reg_stage_d.rf_wr_en,
+                rd: reg_stage_d.rd,
                 rf_rdata2: rf_rdata2_f,
-                funct3: reg_stage1.funct3,
-                sel_res: reg_stage1.sel_res,
-                sel_rf_wr: reg_stage1.sel_rf_wr,
+                funct3: reg_stage_d.funct3,
+                sel_res: reg_stage_d.sel_res,
+                sel_rf_wr: reg_stage_d.sel_rf_wr,
                 ex_out: ex_out,
-                inc_pc: reg_stage1.inc_pc,
-                dmem_wr_en: reg_stage1.dmem_wr_en,
-                ecall: reg_stage1.ecall
+                inc_pc: reg_stage_d.inc_pc,
+                dmem_wr_en: reg_stage_d.dmem_wr_en,
+                ecall: reg_stage_d.ecall
                 };
 
-assign stage3 = '{
-                rf_wr_en: reg_stage2.rf_wr_en,
-                rd: reg_stage2.rd,
-                sel_rf_wr: reg_stage2.sel_rf_wr,
+assign stage_m = '{
+                rf_wr_en: reg_stage_e.rf_wr_en,
+                rd: reg_stage_e.rd,
+                sel_rf_wr: reg_stage_e.sel_rf_wr,
                 result: result,
-                inc_pc: reg_stage2.inc_pc,
-                ecall: reg_stage2.ecall
+                inc_pc: reg_stage_e.inc_pc,
+                ecall: reg_stage_e.ecall
                 };
 
 assign inc_pc = pc + 4;
 assign imem_addr = pc[IADDR-1:0];
 assign instr = imem_rdata;
-assign dmem_addr = reg_stage2.ex_out[DADDR-1:0];
-assign dmem_wdata = reg_stage2.rf_rdata2;
-assign funct3_m = reg_stage2.funct3;
-assign fin = reg_stage3.ecall;
+assign dmem_addr = reg_stage_e.ex_out[DADDR-1:0];
+assign dmem_wdata = reg_stage_e.rf_rdata2;
+assign funct3_m = reg_stage_e.funct3;
+assign fin = reg_stage_m.ecall;
 
-assign rd_ex = reg_stage1.rd;
-assign rd_mem = reg_stage2.rd;
-assign rd_wb = reg_stage3.rd;
+assign rd_ex = reg_stage_d.rd;
+assign rd_mem = reg_stage_e.rd;
+assign rd_wb = reg_stage_m.rd;
 assign rs1_dec = rs1;
 assign rs2_dec = rs2;
-assign rs1_ex = reg_stage1.rs1;
-assign rs2_ex = reg_stage1.rs2;
-assign mem_to_reg_ex = reg_stage1.sel_res;
-assign mem_to_reg_m = reg_stage2.sel_res;
-assign dmem_wr_en = reg_stage2.dmem_wr_en;
-assign reg_op_type = reg_stage1.op_type;
+assign rs1_ex = reg_stage_d.rs1;
+assign rs2_ex = reg_stage_d.rs2;
+assign mem_to_reg_ex = reg_stage_d.sel_res;
+assign mem_to_reg_m = reg_stage_e.sel_res;
+assign dmem_wr_en = reg_stage_e.dmem_wr_en;
+assign reg_op_type = reg_stage_d.op_type;
 
 assign stall_f = load_hazard;
 assign stall_d = load_hazard;
@@ -161,21 +159,21 @@ flopencr #(
 ////////// Decode //////////
 
 flopencr #(
-    .WIDTH($bits(stage0))
+    .WIDTH($bits(stage_f))
 ) reg_decode (
     .clk(clk),
     .reset_n(reset_n),
     .init('d0),
     .wr_en(!stall_d),
     .clr(flush_d),
-    .in(stage0),
-    .out(reg_stage0)
+    .in(stage_f),
+    .out(reg_stage_f)
 );
 
 decoder #(
     .WIDTH(WIDTH)
 ) decoder (
-    .instr(reg_stage0.instr),
+    .instr(reg_stage_f.instr),
     .op_type(op_type),
     .rs1(rs1),
     .rs2(rs2),
@@ -191,10 +189,10 @@ regfile #(
 ) regfile (
     .clk(clk),
     .reset_n(reset_n),
-    .wr_en(reg_stage3.rf_wr_en),
+    .wr_en(reg_stage_m.rf_wr_en),
     .rs1(rs1),
     .rs2(rs2),
-    .rd(reg_stage3.rd),
+    .rd(reg_stage_m.rd),
     .rdata1(rf_rdata1),
     .rdata2(rf_rdata2),
     .wdata(rf_wdata)
@@ -203,24 +201,24 @@ regfile #(
 ////////// Execute //////////
 
 flopencr #(
-    .WIDTH($bits(stage1))
+    .WIDTH($bits(stage_d))
 ) reg_execute (
     .clk(clk),
     .reset_n(reset_n),
     .init('d0),
     .wr_en(1'b1),
     .clr(flush_e),
-    .in(stage1),
-    .out(reg_stage1)
+    .in(stage_d),
+    .out(reg_stage_d)
 );
 
 mux4 #(
     .WIDTH(WIDTH)
 ) mux4_rf_rdata1_forwarding (
     .sel(sel_rdata1_f),
-    .in0(reg_stage1.rf_rdata1),
-    .in1(reg_stage2.ex_out),
-    .in2(reg_stage3.result),
+    .in0(reg_stage_d.rf_rdata1),
+    .in1(reg_stage_e.ex_out),
+    .in2(reg_stage_m.result),
     .in3(),
     .out(rf_rdata1_f)
 );
@@ -229,9 +227,9 @@ mux4 #(
     .WIDTH(WIDTH)
 ) mux4_rf_rdata2_forwarding (
     .sel(sel_rdata2_f),
-    .in0(reg_stage1.rf_rdata2),
-    .in1(reg_stage2.ex_out),
-    .in2(reg_stage3.result),
+    .in0(reg_stage_d.rf_rdata2),
+    .in1(reg_stage_e.ex_out),
+    .in2(reg_stage_m.result),
     .in3(),
     .out(rf_rdata2_f)
 );
@@ -239,25 +237,25 @@ mux4 #(
 mux2 #(
     .WIDTH(WIDTH)
 ) mux2_alu0 (
-    .sel(reg_stage1.sel_alu0),
+    .sel(reg_stage_d.sel_alu0),
     .in0(rf_rdata1_f),
-    .in1(reg_stage1.pc),
+    .in1(reg_stage_d.pc),
     .out(alu_in0)
 );
 
 mux2 #(
     .WIDTH(WIDTH)
 ) mux2_alu1 (
-    .sel(reg_stage1.sel_alu1),
+    .sel(reg_stage_d.sel_alu1),
     .in0(rf_rdata2_f),
-    .in1(reg_stage1.imm),
+    .in1(reg_stage_d.imm),
     .out(alu_in1)
 );
 
 alu #(
     .WIDTH(WIDTH)
 ) alu (
-    .alu_type(reg_stage1.alu_type),
+    .alu_type(reg_stage_d.alu_type),
     .in0(alu_in0),
     .in1(alu_in1),
     .out(alu_out)
@@ -266,7 +264,7 @@ alu #(
 cmp #(
     .WIDTH(WIDTH)
 ) cmp (
-    .cmp_type(reg_stage1.cmp_type),
+    .cmp_type(reg_stage_d.cmp_type),
     .in0(rf_rdata1_f),
     .in1(rf_rdata2_f),
     .out(cmp_out)
@@ -275,31 +273,31 @@ cmp #(
 mux2 #(
     .WIDTH(WIDTH)
 ) mux2_ex (
-    .sel(reg_stage1.sel_ex),
+    .sel(reg_stage_d.sel_ex),
     .in0(alu_out),
-    .in1(reg_stage1.imm),
+    .in1(reg_stage_d.imm),
     .out(ex_out)
 );
 
 ////////// Memory //////////
 
 flopencr #(
-    .WIDTH($bits(stage2))
+    .WIDTH($bits(stage_e))
 ) reg_memory (
     .clk(clk),
     .reset_n(reset_n),
     .init('d0),
     .wr_en(1'b1),
     .clr(1'b0),
-    .in(stage2),
-    .out(reg_stage2)
+    .in(stage_e),
+    .out(reg_stage_e)
 );
 
 mux2 #(
     .WIDTH(WIDTH)
 ) mux2_res (
-    .sel(reg_stage2.sel_res),
-    .in0(reg_stage2.ex_out),
+    .sel(reg_stage_e.sel_res),
+    .in0(reg_stage_e.ex_out),
     .in1(dmem_rdata),
     .out(result)
 );
@@ -307,23 +305,23 @@ mux2 #(
 ////////// Write Back //////////
 
 flopencr #(
-    .WIDTH($bits(stage3))
+    .WIDTH($bits(stage_m))
 ) reg_wback (
     .clk(clk),
     .reset_n(reset_n),
     .init('d0),
     .wr_en(1'b1),
     .clr(1'b0),
-    .in(stage3),
-    .out(reg_stage3)
+    .in(stage_m),
+    .out(reg_stage_m)
 );
 
 mux2 #(
     .WIDTH(WIDTH)
 ) mux2_rf_wr (
-    .sel(reg_stage3.sel_rf_wr),
-    .in0(reg_stage3.result),
-    .in1(reg_stage3.inc_pc),
+    .sel(reg_stage_m.sel_rf_wr),
+    .in0(reg_stage_m.result),
+    .in1(reg_stage_m.inc_pc),
     .out(rf_wdata)
 );
 
