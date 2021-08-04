@@ -17,8 +17,8 @@ module riscv #(parameter WIDTH=32, IADDR=16, DADDR=16)
 import lib_pkg::*;
 
 op_type_t op_type, reg_op_type;
-logic [2:0] funct3;
-logic [6:0] funct7;
+logic [2:0] funct3_d, funct3_m;
+logic [6:0] funct7_d;
 
 logic sel_alu0;
 logic sel_alu1;
@@ -35,7 +35,7 @@ logic [WIDTH-1:0] dmem_rdata_ex;
 logic [1:0] sel_rdata1_f, sel_rdata2_f;
 logic [4:0] rd_ex, rd_mem, rd_wb, rs1_dec, rs2_dec, rs1_ex, rs2_ex;
 logic load_hazard;
-logic mem_to_reg;
+logic mem_to_reg_m, mem_to_reg_ex;
 logic [3:0] dmem_wr_en_dec;
 
 datapath #(
@@ -48,8 +48,9 @@ datapath #(
     .init_pc(init_pc),
     .op_type(op_type),
     .reg_op_type(reg_op_type),
-    .funct3(funct3),
-    .funct7(funct7),
+    .funct3_d(funct3_d),
+    .funct3_m(funct3_m),
+    .funct7_d(funct7_d),
     .imem_addr(imem_addr),
     .imem_rdata(imem_rdata),
     .dmem_addr(dmem_addr),
@@ -75,7 +76,8 @@ datapath #(
     .rs1_ex(rs1_ex),
     .rs2_ex(rs2_ex),
     .load_hazard(load_hazard),
-    .mem_to_reg(mem_to_reg),
+    .mem_to_reg_ex(mem_to_reg_ex),
+    .mem_to_reg_m(mem_to_reg_m),
     .dmem_wr_en_dec(dmem_wr_en_dec),
     .dmem_wr_en(dmem_wr_en),
     .ecall(ecall),
@@ -86,8 +88,8 @@ controller #(
 ) controller (
     .op_type(op_type),
     .reg_op_type(reg_op_type),
-    .funct3(funct3),
-    .funct7(funct7),
+    .funct3(funct3_d),
+    .funct7(funct7_d),
     .cmp_res(cmp_res),
     .sel_alu0(sel_alu0),
     .sel_alu1(sel_alu1),
@@ -105,8 +107,8 @@ controller #(
 mem_extent #(
     .WIDTH(WIDTH)
 ) mem_extent (
-    .op_type(op_type),
-    .funct3(funct3),
+    .load(mem_to_reg_m),
+    .funct3(funct3_m),
     .in(dmem_rdata),
     .out(dmem_rdata_ex)
 );
@@ -122,7 +124,7 @@ hazard_detector #(
     .rs2_ex(rs2_ex),
     .sel_rdata1_f(sel_rdata1_f),
     .sel_rdata2_f(sel_rdata2_f),
-    .load(mem_to_reg),
+    .load(mem_to_reg_ex),
     .load_hazard(load_hazard)
 );
 

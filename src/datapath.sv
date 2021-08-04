@@ -9,8 +9,9 @@ import lib_pkg::*;
     input logic [WIDTH-1:0] init_pc,
     output op_type_t op_type,
     output op_type_t reg_op_type,
-    output logic [2:0] funct3,
-    output logic [6:0] funct7,
+    output logic [2:0] funct3_d,
+    output logic [2:0] funct3_m,
+    output logic [6:0] funct7_d,
     output logic [IADDR-1:0] imem_addr,
     input logic [WIDTH-1:0] imem_rdata,
     output logic [DADDR-1:0] dmem_addr,
@@ -35,7 +36,8 @@ import lib_pkg::*;
     output logic [4:0] rs2_dec, 
     output logic [4:0] rs1_ex, 
     output logic [4:0] rs2_ex, 
-    output logic mem_to_reg,
+    output logic mem_to_reg_ex,
+    output logic mem_to_reg_m,
     input logic load_hazard,
     input logic [3:0] dmem_wr_en_dec,
     output logic [3:0] dmem_wr_en,
@@ -76,6 +78,7 @@ assign stage1 = '{
                 rs1: rs1,
                 rs2: rs2,
                 rd: rd,
+                funct3: funct3_d,
                 rf_rdata1: rf_rdata1,
                 rf_rdata2: rf_rdata2,
                 imm: imm,
@@ -97,6 +100,7 @@ assign stage2 = '{
                 rd: reg_stage1.rd,
                 //rf_rdata2: reg_stage1.rf_rdata2,
                 rf_rdata2: rf_rdata2_f,
+                funct3: reg_stage1.funct3,
                 sel_res: reg_stage1.sel_res,
                 sel_rf_wr: reg_stage1.sel_rf_wr,
                 ex_out: ex_out,
@@ -119,6 +123,7 @@ assign imem_addr = pc[IADDR-1:0];
 assign instr = imem_rdata;
 assign dmem_addr = reg_stage2.ex_out[DADDR-1:0];
 assign dmem_wdata = reg_stage2.rf_rdata2;
+assign funct3_m = reg_stage2.funct3;
 assign fin = reg_stage3.ecall;
 
 assign rd_ex = reg_stage1.rd;
@@ -128,7 +133,8 @@ assign rs1_dec = rs1;
 assign rs2_dec = rs2;
 assign rs1_ex = reg_stage1.rs1;
 assign rs2_ex = reg_stage1.rs2;
-assign mem_to_reg = reg_stage1.sel_res;
+assign mem_to_reg_ex = reg_stage1.sel_res;
+assign mem_to_reg_m = reg_stage2.sel_res;
 assign dmem_wr_en = reg_stage2.dmem_wr_en;
 assign reg_op_type = reg_stage1.op_type;
 
@@ -174,8 +180,8 @@ decoder #(
     .rs1(rs1),
     .rs2(rs2),
     .rd(rd),
-    .funct3(funct3),
-    .funct7(funct7),
+    .funct3(funct3_d),
+    .funct7(funct7_d),
     .imm(imm)
 );
 
