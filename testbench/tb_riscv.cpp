@@ -27,11 +27,11 @@ unsigned int read_mem(vector<unsigned char>& mem, int addr){
         ret |= static_cast<unsigned int>(mem[addr+i]) << (8*i);
     }
 
-    //static int last;
-    //if(addr > 0x100 && last != addr){
-    //    fprintf(stderr, "read. addr=%x, val=%x\n", addr, ret);
-    //    last = addr;
-    //}
+    static int last;
+    if(addr > 0x100 && last != addr){
+        fprintf(stderr, "read. addr=%x, val=%x\n", addr, ret);
+        last = addr;
+    }
     return ret;
 }
 
@@ -41,8 +41,8 @@ void write_mem(vector<unsigned char>& mem, int addr, unsigned int val, int wr_en
             mem[addr+i] = (val >> (8*i)) & 0xFF;
         }
     }
-    //if(wr_en)
-    //    fprintf(stderr, "write. addr=%x, val=%x\n", addr, val);
+    if(wr_en)
+        fprintf(stderr, "write. addr=%x, val=%x\n", addr, val);
 }
 
 int main(int argc, char **argv) {
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 
         if(dut->fin == 1){
             fprintf(stderr, "ECALL is issued.\n");
-            printf("a0 : %08x\n", dut->v__DOT__datapath__DOT__regfile__DOT__data[10]);
+            printf("a0 : %08x, a7 : %08x\n", dut->v__DOT__datapath__DOT__regfile__DOT__data[10], dut->v__DOT__datapath__DOT__regfile__DOT__data[17]);
             break;
         }
 

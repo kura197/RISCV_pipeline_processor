@@ -15,7 +15,7 @@ for file in `find $ISA_DIR -maxdepth 1 -type f`; do
         #output="test $file .. "
         result=`$SIM $file 2> /dev/null`
         #echo $result
-        `echo $result | grep -q "a0 : 00000000"`
+        `echo $result | grep -q "a0 : 00000000, a7 : 0000005d"`
         if [ $? -ne 0 ]; then
             NFAIL=$(($NFAIL + 1))
             echo $file

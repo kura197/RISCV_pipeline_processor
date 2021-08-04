@@ -34,9 +34,7 @@ logic ecall;
 logic [WIDTH-1:0] dmem_rdata_ex;
 logic [1:0] sel_rdata1_f, sel_rdata2_f;
 logic [4:0] rd_ex, rd_mem, rd_wb, rs1_dec, rs2_dec, rs1_ex, rs2_ex;
-logic stall_f;
-logic stall_d;
-logic flush_e;
+logic load_hazard;
 logic mem_to_reg;
 logic [3:0] dmem_wr_en_dec;
 
@@ -76,9 +74,7 @@ datapath #(
     .rs2_dec(rs2_dec),
     .rs1_ex(rs1_ex),
     .rs2_ex(rs2_ex),
-    .stall_f(stall_f),
-    .stall_d(stall_d),
-    .flush_e(flush_e),
+    .load_hazard(load_hazard),
     .mem_to_reg(mem_to_reg),
     .dmem_wr_en_dec(dmem_wr_en_dec),
     .dmem_wr_en(dmem_wr_en),
@@ -127,9 +123,7 @@ hazard_detector #(
     .sel_rdata1_f(sel_rdata1_f),
     .sel_rdata2_f(sel_rdata2_f),
     .load(mem_to_reg),
-    .stall_f(stall_f), 
-    .stall_d(stall_d),
-    .flush_e(flush_e)
+    .load_hazard(load_hazard)
 );
 
 endmodule

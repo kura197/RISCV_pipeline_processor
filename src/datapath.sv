@@ -36,9 +36,7 @@ import lib_pkg::*;
     output logic [4:0] rs1_ex, 
     output logic [4:0] rs2_ex, 
     output logic mem_to_reg,
-    input logic stall_f,
-    input logic stall_d,
-    input logic flush_e,
+    input logic load_hazard,
     input logic [3:0] dmem_wr_en_dec,
     output logic [3:0] dmem_wr_en,
     input logic ecall,
@@ -58,6 +56,8 @@ logic [WIDTH-1:0] rf_rdata1_f, rf_rdata2_f;
 logic [WIDTH-1:0] alu_in0, alu_in1, alu_out;
 logic [WIDTH-1:0] ex_out;
 logic [WIDTH-1:0] result;
+logic flush_f, flush_d, flush_e;
+logic stall_f, stall_d;
 
 bus_stage0 stage0, reg_stage0;
 bus_stage1 stage1, reg_stage1;
@@ -99,9 +99,7 @@ assign stage2 = '{
                 rf_rdata2: rf_rdata2_f,
                 sel_res: reg_stage1.sel_res,
                 sel_rf_wr: reg_stage1.sel_rf_wr,
-                sel_pc: sel_pc,
                 ex_out: ex_out,
-                cmp_out: cmp_out,
                 inc_pc: reg_stage1.inc_pc,
                 dmem_wr_en: reg_stage1.dmem_wr_en,
                 ecall: reg_stage1.ecall
@@ -111,8 +109,6 @@ assign stage3 = '{
                 rf_wr_en: reg_stage2.rf_wr_en,
                 rd: reg_stage2.rd,
                 sel_rf_wr: reg_stage2.sel_rf_wr,
-                sel_pc: reg_stage2.sel_pc,
-                cmp_out: reg_stage2.cmp_out,
                 result: result,
                 inc_pc: reg_stage2.inc_pc,
                 ecall: reg_stage2.ecall
@@ -136,15 +132,21 @@ assign mem_to_reg = reg_stage1.sel_res;
 assign dmem_wr_en = reg_stage2.dmem_wr_en;
 assign reg_op_type = reg_stage1.op_type;
 
+assign stall_f = load_hazard;
+assign stall_d = load_hazard;
+assign flush_d = sel_pc;
+assign flush_e = load_hazard | sel_pc;
+
 ////////// Fetch //////////
 
-flopenr #(
+flopencr #(
     .WIDTH(WIDTH)
 ) reg_pc (
     .clk(clk),
     .reset_n(reset_n),
     .init(init_pc),
     .wr_en(!stall_f),
+    .clr(1'b0),
     .in(next_pc),
     .out(pc)
 );
@@ -152,13 +154,14 @@ flopenr #(
 
 ////////// Decode //////////
 
-flopenr #(
+flopencr #(
     .WIDTH($bits(stage0))
 ) reg_decode (
     .clk(clk),
     .reset_n(reset_n),
     .init('d0),
     .wr_en(!stall_d),
+    .clr(flush_d),
     .in(stage0),
     .out(reg_stage0)
 );
@@ -193,14 +196,14 @@ regfile #(
 
 ////////// Execute //////////
 
-flopenr #(
+flopencr #(
     .WIDTH($bits(stage1))
 ) reg_execute (
     .clk(clk),
-    .reset_n(reset_n & ~flush_e),
-    //.reset_n(reset_n),
+    .reset_n(reset_n),
     .init('d0),
     .wr_en(1'b1),
+    .clr(flush_e),
     .in(stage1),
     .out(reg_stage1)
 );
@@ -258,8 +261,8 @@ cmp #(
     .WIDTH(WIDTH)
 ) cmp (
     .cmp_type(reg_stage1.cmp_type),
-    .in0(reg_stage1.rf_rdata1),
-    .in1(reg_stage1.rf_rdata2),
+    .in0(rf_rdata1_f),
+    .in1(rf_rdata2_f),
     .out(cmp_out)
 );
 
@@ -274,13 +277,14 @@ mux2 #(
 
 ////////// Memory //////////
 
-flopenr #(
+flopencr #(
     .WIDTH($bits(stage2))
 ) reg_memory (
     .clk(clk),
     .reset_n(reset_n),
     .init('d0),
     .wr_en(1'b1),
+    .clr(1'b0),
     .in(stage2),
     .out(reg_stage2)
 );
@@ -296,13 +300,14 @@ mux2 #(
 
 ////////// Write Back //////////
 
-flopenr #(
+flopencr #(
     .WIDTH($bits(stage3))
 ) reg_wback (
     .clk(clk),
     .reset_n(reset_n),
     .init('d0),
     .wr_en(1'b1),
+    .clr(1'b0),
     .in(stage3),
     .out(reg_stage3)
 );
@@ -316,15 +321,12 @@ mux2 #(
     .out(rf_wdata)
 );
 
-/// TODO: support jump
 mux2 #(
     .WIDTH(WIDTH)
 ) mux2_pc (
-    //.sel(reg_stage3.sel_pc),
-    .sel(reg_stage3.sel_pc),
+    .sel(sel_pc),
     .in0(inc_pc),
-    //.in1(reg_stage3.result),
-    .in1(reg_stage3.result),
+    .in1(ex_out),
     .out(next_pc)
 );
 

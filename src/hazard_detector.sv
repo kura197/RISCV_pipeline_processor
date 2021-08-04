@@ -15,16 +15,10 @@ import lib_pkg::*;
     output logic [1:0] sel_rdata1_f,
     output logic [1:0] sel_rdata2_f,
     input logic load,
-    output logic stall_f,
-    output logic stall_d,
-    output logic flush_e
+    output logic load_hazard
 );
 
-logic stall_load;
-assign stall_load = load && ((rd_ex == rs1_dec) || (rd_ex == rs2_dec));
-assign stall_f = stall_load;
-assign stall_d = stall_load;
-assign flush_e = stall_load;
+assign load_hazard = load && ((rd_ex == rs1_dec) || (rd_ex == rs2_dec));
 
 assign sel_rdata1_f = (rs1_ex != 0 && rd_mem == rs1_ex) ? 2'b01 :
                       (rs1_ex != 0 && rd_wb == rs1_ex)  ? 2'b10 : 2'b00;

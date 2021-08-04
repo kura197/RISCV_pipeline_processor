@@ -58,7 +58,7 @@ always_comb
         7'b1100011: begin
             op_type = BRANCH;
             imm = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
-            rd = instr[11:7];
+            rd = 0;
             funct3 = instr[14:12];
             rs1 = instr[19:15];
             rs2 = instr[24:20];
@@ -113,10 +113,10 @@ always_comb
             op_type = SYSTEM;
             imm = 32'dx;
             rd = 0;
-            funct3 = 0;
+            funct3 = instr[14:12];
             rs1 = 0;
             rs2 = 0;
-            funct7 = 0;
+            funct7 = instr[31:25];
         end
         default: begin
             op_type = 4'dx;
